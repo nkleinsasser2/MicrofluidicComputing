@@ -4,13 +4,16 @@
     "rate": 5.0,
     "delay": 0,
     "prime": 2.0,
+    "wait_1": 2,
     "start": true,
+    "wait_2": 3,
     "pause": true,
     "stop": true,
-    "restart": true,
     "units": 0,
     "limits": true,
     "dispensed": true,
     "elapsed": true,
-    "status": true
+    "status": true,
+    "wait_3": 1,
+    "restart": true
 }

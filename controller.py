@@ -284,53 +284,43 @@ class ChemyxPump:
             
             responses = []
             
-            # Handle both old and new config formats
-            if "commands" in config:
-                # New format with commands list
-                for cmd in config["commands"]:
-                    parts = cmd.split()
-                    command = parts[0].lower()
-                    value = float(parts[1]) if len(parts) > 1 else None
-                    
-                    if command == "diameter":
-                        responses.append(self.set_diameter(value))
-                    elif command == "volume":
-                        mode = "withdrawal" if value < 0 else "infusion"
-                        responses.append(self.set_volume(abs(value), mode))
-                    elif command == "rate":
-                        responses.append(self.set_rate(value))
-                    elif command == "delay":
-                        responses.append(self.set_delay(value))
-                    elif command == "prime":
-                        responses.append(self.set_prime_rate(value))
-                    elif command == "start":
-                        responses.append(self.start())
-                    elif command == "stop":
-                        responses.append(self.stop())
-                    elif command == "pause":
-                        responses.append(self.pause())
-                    elif command == "restart":
-                        responses.append(self.restart())
-                    elif command == "set units":
-                        responses.append(self.set_units(int(value)))
-                    time.sleep(0.1)
-            else:
-                # Old format with parameter dictionary
-                for param, value in config.items():
-                    if param == 'diameter':
-                        responses.append(self.set_diameter(value))
-                    elif param == 'volume':
-                        mode = "withdrawal" if value < 0 else "infusion"
-                        responses.append(self.set_volume(abs(value), mode))
-                    elif param == 'rate':
-                        responses.append(self.set_rate(value))
-                    elif param == 'delay':
-                        responses.append(self.set_delay(value))
-                    elif param == 'time':
-                        responses.append(self.set_time(value))
-                    elif param == 'units':
-                        responses.append(self.set_units(int(value)))
-                    time.sleep(0.1)
+            # Handle commands list
+            for param, value in config.items():
+                if param.startswith("wait_"):
+                    # Handle wait commands
+                    print(f"Waiting for {value} seconds...")
+                    time.sleep(value)  # Wait for the specified time
+                    continue  # Skip to the next parameter
+                
+                if param == 'diameter':
+                    responses.append(self.set_diameter(value))
+                elif param == 'volume':
+                    mode = "withdrawal" if value < 0 else "infusion"
+                    responses.append(self.set_volume(abs(value), mode))
+                elif param == 'rate':
+                    responses.append(self.set_rate(value))
+                elif param == 'delay':
+                    responses.append(self.set_delay(value))
+                elif param == 'time':
+                    responses.append(self.set_time(value))
+                elif param == 'units':
+                    responses.append(self.set_units(int(value)))
+                elif param in ['start', 'stop', 'pause', 'restart']:
+                    responses.append(getattr(self, param)())  # Call the method directly
+                
+                # Handle boolean parameters
+                elif param == 'limits' and value:
+                    responses.append(self.get_limits())
+                elif param == 'dispensed' and value:
+                    responses.append(self.get_dispensed_volume())
+                elif param == 'elapsed' and value:
+                    responses.append(self.get_elapsed_time())
+                elif param == 'status' and value:
+                    responses.append(self.get_status())
+                
+                # Output command status
+                print(f"Executed command: {param}, Status: {responses[-1]}")
+                time.sleep(0.1)  # Small delay between commands
             
             return f"Configuration loaded from {config_path}\nResponses: {'; '.join(responses)}"
         
