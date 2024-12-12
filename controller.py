@@ -271,53 +271,15 @@ class ChemyxPump:
         except Exception as e:
             print(f"Failed to clear communication: {e}")
 
-    def save_config(self, filename: str) -> str:
-        """Save current pump configuration to a JSON file."""
-        if not filename.endswith('.json'):
-            filename += '.json'
-        
-        try:
-            # Get current parameters
-            config = {
-                "info": {
-                    "description": "Saved pump configuration",
-                    "created": time.strftime("%Y-%m-%d %H:%M:%S"),
-                    "notes": "Automatically saved configuration"
-                },
-                "commands": []
-            }
-            
-            # Get current values
-            diameter = self.send_command("read diameter parameter")
-            volume = self.send_command("read volume parameter")
-            rate = self.send_command("read rate parameter")
-            delay = self.send_command("read delay parameter")
-            prime = self.send_command("read primerate parameter")
-            
-            # Parse and add commands
-            for response in [diameter, volume, rate, delay, prime]:
-                if ":" in response:
-                    param, value = response.split(":", 1)
-                    param = param.strip().lower()
-                    value = value.strip().split()[0]  # Remove units
-                    config["commands"].append(f"{param} {value}")
-            
-            # Save to file
-            with open(filename, 'w') as f:
-                json.dump(config, f, indent=4)
-            
-            return f"Configuration saved to {filename}"
-        
-        except Exception as e:
-            return f"Failed to save configuration: {e}"
-
     def load_config(self, filename: str) -> str:
-        """Load pump configuration from a JSON file and apply it."""
-        if not filename.endswith('.json'):
-            filename += '.json'
+        """Load pump configuration from a JSON file in the configs folder and apply it."""
+        # Ensure the filename has the correct path
+        config_path = os.path.join('configs', filename)  # Update to point to the configs folder
+        if not config_path.endswith('.json'):
+            config_path += '.json'
         
         try:
-            with open(filename, 'r') as f:
+            with open(config_path, 'r') as f:
                 config = json.load(f)
             
             responses = []
@@ -343,6 +305,14 @@ class ChemyxPump:
                         responses.append(self.set_prime_rate(value))
                     elif command == "start":
                         responses.append(self.start())
+                    elif command == "stop":
+                        responses.append(self.stop())
+                    elif command == "pause":
+                        responses.append(self.pause())
+                    elif command == "restart":
+                        responses.append(self.restart())
+                    elif command == "set units":
+                        responses.append(self.set_units(int(value)))
                     time.sleep(0.1)
             else:
                 # Old format with parameter dictionary
@@ -362,10 +332,10 @@ class ChemyxPump:
                         responses.append(self.set_units(int(value)))
                     time.sleep(0.1)
             
-            return f"Configuration loaded from {filename}\nResponses: {'; '.join(responses)}"
+            return f"Configuration loaded from {config_path}\nResponses: {'; '.join(responses)}"
         
         except FileNotFoundError:
-            return f"Configuration file {filename} not found"
+            return f"Configuration file {config_path} not found"
         except Exception as e:
             return f"Failed to load configuration: {e}"
 
@@ -469,7 +439,6 @@ def main():
         'help': 'Show this help message',
         'exit': 'Exit the program',
         'clear': 'Clear communication buffer',
-        'save': 'Save current configuration to file. Usage: save <filename>',
         'load': 'Load configuration from file. Usage: load <filename>',
         'list': 'List saved configuration files',
     }
@@ -552,9 +521,6 @@ def main():
                 print(pump.get_parameters())
             elif command == 'clear':
                 print(pump.clear_communication())
-            elif command.startswith('save '):
-                filename = command.split(maxsplit=1)[1]
-                print(pump.save_config(filename))
             elif command.startswith('load '):
                 filename = command.split(maxsplit=1)[1]
                 print(pump.load_config(filename))
@@ -563,6 +529,7 @@ def main():
                 if configs:
                     print("Available configurations:")
                     for config in configs:
+
                         print(f"  - {config}")
                 else:
                     print("No configuration files found")

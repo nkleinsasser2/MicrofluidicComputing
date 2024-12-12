@@ -1,3 +1,16 @@
 {
-    "rate": 1.0
+    "diameter": 10.0,
+    "volume": 15.0,
+    "rate": 5.0,
+    "delay": 0,
+    "prime": 2.0,
+    "start": true,
+    "pause": true,
+    "stop": true,
+    "restart": true,
+    "units": 0,
+    "limits": true,
+    "dispensed": true,
+    "elapsed": true,
+    "status": true
 }
